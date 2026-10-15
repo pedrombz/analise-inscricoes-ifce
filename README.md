@@ -301,28 +301,6 @@ Por isso:
 A publicação deve respeitar as regras de acesso, confidencialidade e
 proteção de dados aplicáveis à fonte.
 
-## Limitações e roadmap
-
-### Limitações atuais
-
--   O extrator depende do padrão de layout do PDF esperado.
--   A validação não compara automaticamente o total extraído com os
-    totais declarados no documento.
--   Os resultados descrevem a distribuição dos registros e não explicam,
-    por si só, as causas das diferenças entre os polos.
-
-### Próximos passos
-
--   [ ] Migrar os testes para `pytest`.
--   [ ] Suportar diferentes layouts de PDF.
--   [ ] Registrar em log os registros que não puderam ser extraídos.
--   [ ] Reconciliar automaticamente o total extraído com o total do
-    documento.
--   [ ] Exportar tabelas e indicadores em formato padronizado.
--   [ ] Publicar gráficos de exemplo no README.
--   [ ] Configurar integração contínua para executar os testes a cada
-    alteração.
-
 ## Autor
 
 Projeto de portfólio em Python, análise de dados, automação e construção
