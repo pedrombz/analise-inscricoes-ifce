@@ -1,0 +1,25 @@
+# Ambiente virtual
+.venv/
+venv/
+env/
+
+# Cache e arquivos Python
+__pycache__/
+*.py[cod]
+
+# Configurações locais
+.env
+.env.*
+!.env.example
+
+# Dados de origem e resultados locais
+dados/
+resultados/
+
+# Logs
+*.log
+
+# Arquivos temporários e de sistema
+.DS_Store
+Thumbs.db
+desktop.ini
