@@ -87,9 +87,6 @@ Na execução utilizada durante o desenvolvimento, foram identificados:
 
 Esses resultados descrevem a execução de validação realizada durante o desenvolvimento e podem variar conforme a base utilizada.
 
-## Boas práticas
-
-O repositório não deve conter o PDF original, nomes, protocolos ou outros dados pessoais. Utilize apenas dados e resultados cuja divulgação esteja autorizada.
 
 ## Aprendizados
 
