@@ -1,337 +1,296 @@
-# Análise de Inscrições --- IFCE
+# Análise de Inscrições — IFCE
 
-Pipeline em Python que transforma uma lista de inscrições deferidas,
-publicada em PDF, em uma base tabular validada, com indicadores
-estatísticos e visualizações reproduzíveis a partir de um único comando.
+Pipeline em Python que transforma uma lista de inscrições deferidas, publicada em PDF, em uma
+base tabular validada, com indicadores estatísticos e visualizações reproduzíveis a partir de
+um único comando.
 
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
 ![Pandas](https://img.shields.io/badge/Pandas-150458?style=flat&logo=pandas&logoColor=white)
 ![Matplotlib](https://img.shields.io/badge/Matplotlib-11557C?style=flat)
-![Status](https://img.shields.io/badge/status-em%20evolu%C3%A7%C3%A3o-2E8B57?style=flat)
+![Licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-green.svg)
+![CI](https://github.com/pedrombz/analise-inscricoes-ifce/actions/workflows/ci.yml/badge.svg)
 
 ## Sumário
 
--   [Visão geral](#visão-geral)
--   [Principais resultados](#principais-resultados)
--   [Arquitetura](#arquitetura)
--   [Stack](#stack)
--   [Estrutura do repositório](#estrutura-do-repositório)
--   [Como executar](#como-executar)
--   [Análise dos resultados](#análise-dos-resultados)
--   [Qualidade dos dados](#qualidade-dos-dados)
--   [Visualizações](#visualizações)
--   [Privacidade e conformidade](#privacidade-e-conformidade)
--   [Limitações e roadmap](#limitações-e-roadmap)
--   [Autor](#autor)
+- [Visão geral](#visão-geral)
+- [Teste rápido sem dados reais](#teste-rápido-sem-dados-reais)
+- [Principais resultados](#principais-resultados)
+- [Arquitetura](#arquitetura)
+- [Estrutura do repositório](#estrutura-do-repositório)
+- [Como executar](#como-executar)
+- [Testes](#testes)
+- [Análise dos resultados](#análise-dos-resultados)
+- [Qualidade dos dados](#qualidade-dos-dados)
+- [Visualizações](#visualizações)
+- [Privacidade e conformidade](#privacidade-e-conformidade)
+- [Limitações e roadmap](#limitações-e-roadmap)
+- [Licença](#licença)
 
 ## Visão geral
 
-**Problema.** A lista de inscrições é divulgada em PDF, formato que
-dificulta filtrar, agregar e comparar os registros sem antes estruturar
-os dados.
+**Problema.** A lista de inscrições é divulgada em PDF, formato que dificulta filtrar, agregar
+e comparar os registros sem antes estruturar os dados.
 
-**Solução.** Um pipeline modular que extrai os registros do PDF,
-estrutura-os em uma base tabular, valida aspectos da integridade dos
-dados, calcula o ranking e indicadores por polo e gera gráficos.
+**Solução.** Um pipeline modular que extrai os registros do PDF, estrutura-os em uma base
+tabular, valida a integridade, calcula ranking e indicadores por polo e gera gráficos.
 
 **Escopo**
 
--   Extração de registros de PDF com PyMuPDF.
--   Estruturação em colunas: protocolo, nome, curso, polo e situação.
--   Validação de integridade: campos obrigatórios, formato de protocolo
-    e duplicidades.
--   Ranking e indicadores estatísticos por polo.
--   Geração automatizada de gráficos em PNG.
+- Extração de registros de PDF com PyMuPDF, com contagem de controle (protocolos encontrados
+  × registros extraídos) e aviso quando algum protocolo é descartado.
+- Estruturação em colunas: protocolo, nome, curso, polo e situação.
+- Validação de integridade: campos obrigatórios, formato de protocolo, duplicidades e
+  distribuição de situações e polos.
+- Ranking e indicadores estatísticos por polo, exportados em CSV.
+- Geração automatizada de gráficos em PNG.
+- Testes automatizados e CI, com um gerador de PDF sintético para rodar tudo sem dados pessoais.
+
+## Teste rápido sem dados reais
+
+Não é preciso ter o PDF original. O projeto gera um PDF **sintético** (nomes e protocolos
+fictícios) no mesmo formato esperado pelo extrator:
+
+```bash
+python main.py exemplo                                   # cria dados/exemplo_sintetico.pdf
+python main.py executar --pdf dados/exemplo_sintetico.pdf --validar
+```
 
 ## Principais resultados
 
-Na execução de referência, o pipeline processou **743 inscrições
-deferidas em 6 polos**.
+Na execução de referência, o pipeline processou **743 inscrições deferidas em 6 polos**.
 
-  Indicador                                     Resultado
-  -------------------------------- ----------------------
-  Inscrições deferidas                                743
-  Polos identificados                                   6
-  Maior polo --- Fortaleza                   307 (41,32%)
-  Três maiores polos                         555 (74,70%)
-  Média por polo                                   123,83
-  Mediana por polo                                   93,5
-  Razão entre maior e menor polo     Aproximadamente 6,3×
+| Indicador | Resultado |
+| --- | --- |
+| Inscrições deferidas | 743 |
+| Polos identificados | 6 |
+| Maior polo — Fortaleza | 307 (41,32%) |
+| Três maiores polos | 555 (74,70%) |
+| Média por polo | 123,83 |
+| Mediana por polo | 93,5 |
+| Razão entre maior e menor polo | aproximadamente 6,3× |
 
-> Os valores refletem o documento utilizado durante o desenvolvimento e
-> podem mudar conforme o PDF de entrada.
+> Os valores refletem o documento utilizado durante o desenvolvimento e podem mudar conforme
+> o PDF de entrada. Estes números também são reproduzidos em `tests/test_analise.py`.
 
 ## Arquitetura
 
-Cada etapa é organizada em módulos com responsabilidades distintas. O
-`main.py` orquestra a extração, a análise e a geração dos gráficos. A
-validação é executada separadamente.
-
-``` mermaid
+```mermaid
 flowchart TD
     A[PDF de entrada] --> B[extracao.py]
     B --> C[(Base estruturada CSV)]
-    C --> D[validar_dados.py]
+    C --> D[validacao.py]
     C --> E[analise.py]
     E --> F[Ranking por polo]
     E --> G[Indicadores estatísticos]
     F --> H[graficos.py]
     H --> I[Gráficos PNG]
-    J[main.py] -. orquestra .-> B
+    J[pipeline.py / cli.py] -. orquestra .-> B
+    J -. orquestra .-> D
     J -. orquestra .-> E
     J -. orquestra .-> H
 ```
 
-  -----------------------------------------------------------------------
-  Módulo                              Responsabilidade
-  ----------------------------------- -----------------------------------
-  `extracao.py`                       Lê o PDF com PyMuPDF, identifica os
-                                      registros e gera um DataFrame
+| Módulo | Responsabilidade |
+| --- | --- |
+| `inscricoes/extracao.py` | Lê o PDF com PyMuPDF, identifica os registros e devolve um DataFrame com contagem de controle |
+| `inscricoes/validacao.py` | Verifica campos obrigatórios, formato dos protocolos, duplicidades e distribuição de situações e polos |
+| `inscricoes/analise.py` | Filtra inscrições deferidas, agrega por polo, ordena o ranking (desempate determinístico) e calcula indicadores |
+| `inscricoes/graficos.py` | Gera visualizações a partir do resumo (API orientada a objetos do Matplotlib, funciona sem tela) |
+| `inscricoes/pipeline.py` | Executa extração, validação opcional, análise e gráficos em sequência |
+| `inscricoes/cli.py` | Interface de linha de comando com códigos de saída |
+| `inscricoes/amostra.py` | Gera o PDF sintético para demonstração e testes |
 
-  `validar_dados.py`                  Verifica campos obrigatórios,
-                                      formato dos protocolos,
-                                      duplicidades e distribuição de
-                                      situações e polos
-
-  `analise.py`                        Filtra inscrições deferidas, agrega
-                                      por polo, ordena o ranking e
-                                      calcula indicadores
-
-  `graficos.py`                       Gera visualizações a partir do
-                                      resumo da análise
-
-  `main.py`                           Executa extração, análise e geração
-                                      de gráficos em sequência
-  -----------------------------------------------------------------------
-
-**Decisão de projeto:** a validação roda de forma independente do
-`main.py`. Isso permite verificar a base gerada sem reprocessar o
-pipeline completo.
-
-## Stack
-
-  Tecnologia     Uso
-  -------------- ---------------------------------------------
-  Python         Linguagem principal
-  Pandas         Estruturação, agregação e análise
-  PyMuPDF        Extração de texto do PDF
-  Matplotlib     Visualizações
-  OpenPyXL       Dependência incluída no ambiente do projeto
-  Git e GitHub   Versionamento e hospedagem
+**Decisão de projeto:** a validação pode rodar de forma independente (`python main.py validar`)
+ou integrada ao pipeline (`--validar`), que interrompe a execução se houver erros críticos.
 
 ## Estrutura do repositório
 
-``` text
+```
 analise-inscricoes-ifce/
-├── dados/                  # Entradas locais (fora do versionamento)
-├── resultados/             # CSVs, indicadores e gráficos gerados localmente
-├── extracao.py             # Extração estruturada do PDF
-├── validar_dados.py        # Verificações de qualidade
-├── analise.py              # Ranking e indicadores
-├── graficos.py             # Visualizações
-├── main.py                 # Orquestração do pipeline
-├── teste_extracao.py       # Verificação da extração
-├── teste_analise.py        # Verificação da análise
-├── teste_graficos.py       # Verificação dos gráficos
+├── dados/                    # Entradas locais (fora do versionamento)
+├── resultados/               # CSVs, indicadores e gráficos gerados localmente
+├── docs/                     # Gráficos de demonstração (dados sintéticos)
+├── inscricoes/               # Pacote do pipeline
+│   ├── config.py
+│   ├── armazenamento.py
+│   ├── extracao.py
+│   ├── validacao.py
+│   ├── analise.py
+│   ├── graficos.py
+│   ├── pipeline.py
+│   ├── cli.py
+│   └── amostra.py
+├── tests/                    # Testes automatizados (pytest)
+├── .github/workflows/ci.yml  # Lint + testes + demonstração
+├── main.py                   # Ponto de entrada
+├── pyproject.toml
 ├── requirements.txt
-├── .gitignore
+├── requirements-dev.txt
 └── README.md
 ```
-
-As pastas `dados/` e `resultados/` são utilizadas localmente e estão
-excluídas do versionamento para evitar a publicação acidental de
-documentos de origem ou bases que possam conter informações pessoais.
 
 ## Como executar
 
 ### Pré-requisitos
 
--   Python 3 instalado.
--   Um documento PDF compatível com o padrão esperado pelo extrator.
--   Git, caso queira clonar o repositório.
+- Python 3.10 ou superior.
+- Um PDF compatível com o padrão esperado pelo extrator (ou o PDF sintético acima).
 
-### 1. Clonar o repositório
+### 1. Clonar e criar o ambiente
 
-``` bash
+```bash
 git clone https://github.com/pedrombz/analise-inscricoes-ifce.git
 cd analise-inscricoes-ifce
-```
-
-### 2. Criar o ambiente virtual
-
-No Windows:
-
-``` powershell
 python -m venv .venv
 ```
 
-### 3. Ativar o ambiente virtual
+Ativação no Windows (PowerShell): `.\.venv\Scripts\Activate.ps1`. Se o PowerShell bloquear,
+execute o interpretador do ambiente diretamente (`.\.venv\Scripts\python.exe`).
+No Linux/macOS: `source .venv/bin/activate`.
 
-``` powershell
-.\.venv\Scripts\Activate.ps1
-```
+### 2. Instalar as dependências
 
-Se o PowerShell bloquear a ativação, você pode executar diretamente o
-interpretador do ambiente virtual, sem ativá-lo.
-
-### 4. Instalar as dependências
-
-``` powershell
+```bash
 python -m pip install -r requirements.txt
 ```
 
-### 5. Adicionar o documento de entrada
+### 3. Adicionar o documento de entrada
 
-Coloque o PDF esperado pelo projeto na pasta `dados/`, mantendo o nome e
-o caminho configurados no código:
-
-``` text
+```
 dados/Lista das inscrições deferidas.pdf
 ```
 
-O documento original não é distribuído pelo repositório.
+O documento original não é distribuído pelo repositório. Para usar outro caminho, passe `--pdf`.
 
-### 6. Executar o pipeline
+### 4. Executar
 
-``` powershell
-python main.py
+```bash
+python main.py                      # pipeline completo com os caminhos padrão
+python main.py executar --validar   # valida a base logo após a extração
+python main.py executar --estrito   # falha se algum protocolo for descartado
+python main.py validar              # valida uma base já extraída
+python main.py -h                   # todas as opções
 ```
 
-Essa etapa extrai os dados, salva a base estruturada, calcula os
-indicadores e gera os gráficos em `resultados/`.
+| Opção | Efeito |
+| --- | --- |
+| `--pdf CAMINHO` | PDF de entrada |
+| `--saida PASTA` | Pasta de resultados |
+| `--curso "NOME"` | Curso esperado no PDF (padrão: Tecnologia em Inteligência Artificial - UAB) |
+| `--validar` | Valida a base antes da análise e interrompe se houver erros |
+| `--estrito` | Trata protocolos descartados como erro |
 
-### 7. Validar a base
+**Códigos de saída:** `0` sucesso · `1` validação com erros · `2` falha de execução.
 
-``` powershell
-python validar_dados.py
+**Arquivos gerados em `resultados/`:** `inscricoes_deferidas.csv`, `ranking_por_polo.csv`,
+`indicadores_estatisticos.csv`, `01_inscricoes_por_polo.png` e `02_participacao_por_polo.png`.
+
+## Testes
+
+```bash
+python -m pip install -r requirements-dev.txt
+python -m pytest -q
+ruff check .
 ```
 
-A validação é independente e pode ser executada após a extração. A saída
-apresenta verificações de integridade e um resumo quantitativo, sem
-listar nomes ou protocolos individualmente.
+Os testes usam dados sintéticos e cobrem extração (inclusive ruído de paginação, protocolos com
+zero à esquerda e curso divergente), análise (reproduz os números da execução de referência),
+validação (inclusive que o relatório não expõe dados pessoais), gráficos e a CLI de ponta a ponta.
 
 ## Análise dos resultados
 
 ### Distribuição por polo
 
-    Posição Polo                     Inscrições   Participação
-  --------- ---------------------- ------------ --------------
-          1 Fortaleza                       307         41,32%
-          2 Maracanaú                       132         17,77%
-          3 Itapipoca                       116         15,61%
-          4 Horizonte                        71          9,56%
-          5 Caucaia Novo Pabussu             68          9,15%
-          6 Maranguape                       49          6,59%
-            **Total**                   **743**       **100%**
+| Posição | Polo | Inscrições | Participação |
+| ---: | --- | ---: | ---: |
+| 1 | Fortaleza | 307 | 41,32% |
+| 2 | Maracanaú | 132 | 17,77% |
+| 3 | Itapipoca | 116 | 15,61% |
+| 4 | Horizonte | 71 | 9,56% |
+| 5 | Caucaia Novo Pabussu | 68 | 9,15% |
+| 6 | Maranguape | 49 | 6,59% |
+| | **Total** | **743** | **100%** |
 
 ### Estatísticas descritivas
 
-  Indicador                             Resultado
-  ----------------------------------- -----------
-  Média por polo                           123,83
-  Mediana por polo                           93,5
-  Maior volume                                307
-  Menor volume                                 49
-  Amplitude                                   258
-  Inscrições nos três maiores polos           555
-  Participação dos três maiores            74,70%
+| Indicador | Resultado |
+| --- | --- |
+| Média por polo | 123,83 |
+| Mediana por polo | 93,5 |
+| Maior volume | 307 |
+| Menor volume | 49 |
+| Amplitude | 258 |
+| Inscrições nos três maiores polos | 555 |
+| Participação dos três maiores | 74,70% |
 
 ### Leitura dos dados
 
--   **Concentração:** Fortaleza responde por cerca de quatro em cada dez
-    inscrições. Os três maiores polos somam quase 75% do total; os
-    outros três reúnem 188 inscrições.
--   **Média e mediana:** a média (123,83) supera a mediana (93,5), o que
-    é compatível com a influência do volume de Fortaleza sobre a média.
--   **Dispersão:** a diferença entre o maior e o menor polo é de 258
-    registros. O volume de Fortaleza é aproximadamente 6,3 vezes o de
-    Maranguape.
+- **Concentração:** Fortaleza responde por cerca de quatro em cada dez inscrições. Os três
+  maiores polos somam quase 75% do total; os outros três reúnem 188 inscrições.
+- **Média e mediana:** a média (123,83) supera a mediana (93,5), compatível com a influência do
+  volume de Fortaleza sobre a média.
+- **Dispersão:** a diferença entre o maior e o menor polo é de 258 registros. O volume de
+  Fortaleza é aproximadamente 6,3 vezes o de Maranguape.
 
-**Ressalva metodológica:** os números são contagens absolutas. Sem
-informações sobre vagas ofertadas, total de inscritos, população
-atendida ou candidatos por vaga, não é possível inferir demanda relativa
-nem explicar as causas da concentração.
+**Ressalva metodológica:** os números são contagens absolutas. Sem informações sobre vagas
+ofertadas, total de inscritos, população atendida ou candidatos por vaga, não é possível inferir
+demanda relativa nem explicar as causas da concentração.
 
 ## Qualidade dos dados
 
 Resultado da validação na execução de referência:
 
-  Verificação                                Resultado
-  ---------------------------------------- -----------
-  Registros analisados                             743
-  Campos obrigatórios vazios                         0
-  Protocolos duplicados                              0
-  Protocolos fora do padrão esperado                 0
-  Situações identificadas como deferidas           743
-  Polos distintos não vazios                         6
+| Verificação | Resultado |
+| --- | --- |
+| Registros analisados | 743 |
+| Campos obrigatórios vazios | 0 |
+| Protocolos duplicados | 0 |
+| Protocolos fora do padrão esperado | 0 |
+| Situações identificadas como deferidas | 743 |
+| Polos distintos não vazios | 6 |
 
-A validação é estrutural e **não substitui a conferência do conteúdo
-extraído contra o PDF original**. A confiabilidade também depende do
-layout do documento e da correta identificação de cada registro.
+A validação é estrutural e **não substitui a conferência do conteúdo extraído contra o PDF
+original**. A confiabilidade também depende do layout do documento. Por isso a extração informa
+quantos protocolos foram encontrados e quantos foram descartados, e o modo `--estrito` transforma
+qualquer descarte em erro.
 
 ## Visualizações
 
-Os gráficos são gerados localmente em `resultados/` e não são
-versionados. Para exibi-los no GitHub, inclua cópias autorizadas e sem
-dados pessoais em uma pasta pública, como `docs/`, e referencie os
-arquivos no README.
+Gráficos gerados com **dados sintéticos** (`python main.py exemplo`), apenas para ilustrar a saída:
 
-Exemplo de inclusão de um gráfico:
-
-``` markdown
 ![Inscrições por polo](docs/01_inscricoes_por_polo.png)
-```
+![Participação por polo](docs/02_participacao_por_polo.png)
 
-O caminho só funcionará depois que o arquivo correspondente for
-adicionado ao repositório.
+Os gráficos com dados reais ficam em `resultados/` e não são versionados.
 
 ## Privacidade e conformidade
 
-O PDF de origem pode conter nomes, protocolos e outros dados pessoais.
-Por isso:
+O PDF de origem pode conter nomes, protocolos e outros dados pessoais. Por isso:
 
--   `dados/` e `resultados/` estão no `.gitignore`.
--   O PDF original e os CSVs com dados pessoais não devem ser publicados
-    sem autorização.
--   Resultados agregados só devem ser divulgados quando houver
-    autorização para isso.
--   O `.gitignore` evita inclusões acidentais, mas não remove arquivos
-    que já tenham sido enviados ao Git.
+- `dados/` e `resultados/` estão no `.gitignore`.
+- O relatório de validação exibe apenas contagens agregadas, nunca nomes ou protocolos.
+- Os testes e os exemplos usam exclusivamente dados fictícios.
+- O PDF original e os CSVs com dados pessoais não devem ser publicados sem autorização.
+- O `.gitignore` evita inclusões acidentais, mas não remove arquivos que já tenham sido enviados
+  ao Git.
 
-A publicação deve respeitar as regras de acesso, confidencialidade e
-proteção de dados aplicáveis à fonte.
+A publicação deve respeitar as regras de acesso, confidencialidade e proteção de dados
+aplicáveis à fonte (LGPD).
 
 ## Limitações e roadmap
 
-### Limitações atuais
+- O extrator assume o layout atual do PDF (protocolo isolado em uma linha seguido de nome,
+  curso/polo e situação). Layouts diferentes exigem ajustes em `inscricoes/extracao.py`.
+- Indicadores são contagens absolutas; falta cruzar com vagas ofertadas para estimar demanda relativa.
+- Possíveis evoluções: relatório em HTML/Excel, suporte a vários cursos na mesma execução,
+  comparação entre listas de editais diferentes.
 
--   O extrator depende do padrão de layout do PDF esperado.
--   A validação não compara automaticamente o total extraído com os
-    totais declarados no documento.
--   Os resultados descrevem a distribuição dos registros e não explicam,
-    por si só, as causas das diferenças entre os polos.
+## Licença
 
-### Próximos passos
+Distribuído sob a licença MIT. Veja o arquivo [LICENSE](LICENSE). A licença cobre o código;
+os dados de origem (PDF) pertencem à fonte e não são distribuídos aqui.
 
--   [ ] Migrar os testes para `pytest`.
--   [ ] Suportar diferentes layouts de PDF.
--   [ ] Registrar em log os registros que não puderam ser extraídos.
--   [ ] Reconciliar automaticamente o total extraído com o total do
-    documento.
--   [ ] Exportar tabelas e indicadores em formato padronizado.
--   [ ] Publicar gráficos de exemplo no README.
--   [ ] Configurar integração contínua para executar os testes a cada
-    alteração.
+---
 
-## Autor
-
-Projeto de portfólio em Python, análise de dados, automação e construção
-de pipelines.
-
-**GitHub:** [pedrombz](https://github.com/pedrombz)
-
-------------------------------------------------------------------------
-
-*Projeto de portfólio. Os resultados referem-se à execução descrita
-nesta documentação e não constituem avaliação causal ou institucional
-dos polos.*
+*Projeto de portfólio. Os resultados referem-se à execução descrita nesta documentação e não
+constituem avaliação causal ou institucional dos polos.*

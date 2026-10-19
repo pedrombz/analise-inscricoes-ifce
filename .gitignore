@@ -1,25 +1,24 @@
-# Ambiente virtual
-.venv/
-venv/
-env/
-
-# Cache e arquivos Python
-__pycache__/
-*.py[cod]
-
-# Configurações locais
-.env
-.env.*
-!.env.example
-
-# Dados de origem e resultados locais
+# Dados pessoais e resultados gerados localmente (nunca versionar)
 dados/
 resultados/
 
-# Logs
-*.log
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
 
-# Arquivos temporários e de sistema
+# Ferramentas
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Editor / SO
+.vscode/
+.idea/
 .DS_Store
 Thumbs.db
-desktop.ini
