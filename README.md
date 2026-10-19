@@ -31,6 +31,9 @@ um único comando.
 **Problema.** A lista de inscrições é divulgada em PDF, formato que dificulta filtrar, agregar
 e comparar os registros sem antes estruturar os dados.
 
+**Fonte dos dados.** Lista pública de inscrições deferidas divulgada pelo IFCE, disponível em
+<https://qselecao.ifce.edu.br/download.aspx?cod_arquivo_download=74835>.
+
 **Solução.** Um pipeline modular que extrai os registros do PDF, estrutura-os em uma base
 tabular, valida a integridade, calcula ranking e indicadores por polo e gera gráficos.
 
@@ -160,7 +163,8 @@ python -m pip install -r requirements.txt
 dados/Lista das inscrições deferidas.pdf
 ```
 
-O documento original não é distribuído pelo repositório. Para usar outro caminho, passe `--pdf`.
+O PDF é público e pode ser baixado em <https://qselecao.ifce.edu.br/download.aspx?cod_arquivo_download=74835>.
+Ele não é distribuído por este repositório. Para usar outro caminho, passe `--pdf`.
 
 ### 4. Executar
 
@@ -265,17 +269,20 @@ Os gráficos com dados reais ficam em `resultados/` e não são versionados.
 
 ## Privacidade e conformidade
 
-O PDF de origem pode conter nomes, protocolos e outros dados pessoais. Por isso:
+A fonte é um documento público divulgado pelo IFCE, mas contém nomes e protocolos de pessoas.
+Por isso o repositório adota uma postura conservadora:
 
-- `dados/` e `resultados/` estão no `.gitignore`.
-- O relatório de validação exibe apenas contagens agregadas, nunca nomes ou protocolos.
+- O PDF original e a base com nomes **não são versionados**: `dados/` e `resultados/` estão no
+  `.gitignore`.
+- Apenas **resultados agregados** (contagens e percentuais por polo) são publicados.
+- O relatório de validação exibe somente contagens, nunca nomes ou protocolos.
 - Os testes e os exemplos usam exclusivamente dados fictícios.
-- O PDF original e os CSVs com dados pessoais não devem ser publicados sem autorização.
 - O `.gitignore` evita inclusões acidentais, mas não remove arquivos que já tenham sido enviados
   ao Git.
 
-A publicação deve respeitar as regras de acesso, confidencialidade e proteção de dados
-aplicáveis à fonte (LGPD).
+Mesmo para dados de acesso público, a LGPD exige que o tratamento observe a finalidade, a boa-fé
+e o interesse público que justificaram a divulgação. Quem reutilizar este código deve respeitar
+essas regras e as condições de uso da fonte.
 
 ## Limitações e roadmap
 
